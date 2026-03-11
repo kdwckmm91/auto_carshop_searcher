@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: auto_carshop_searcher/package-lock.json
+          cache-dependency-path: ./package-lock.json
 
       - name: 依存パッケージのインストール
         working-directory: auto_carshop_searcher
@@ -42,7 +42,7 @@ jobs:
             "headless": true,
             "delay_min_ms": 2000,
             "delay_max_ms": 5000,
-            "enabled_scrapers": ["carsensor", "goonet", "nextage", "gulliver"]
+            "enabled_scrapers": ["carsensor", "goonet"]
           }
           EOF
 
