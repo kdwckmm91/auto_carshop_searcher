@@ -1,0 +1,53 @@
+name: 中古車自動巡回 (N-BOX)
+
+on:
+  schedule:
+    # 3時間おき（UTC 0:00, 3:00, 6:00, 9:00, 12:00, 15:00, 18:00, 21:00 = JST 9:00〜翌6:00）
+    - cron: '0 */3 * * *'
+  # 手動実行も可能
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: リポジトリ チェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: auto_carshop_searcher/package-lock.json
+
+      - name: 依存パッケージのインストール
+        working-directory: auto_carshop_searcher
+        run: npm ci
+
+      - name: Playwright Chromium のインストール
+        working-directory: auto_carshop_searcher
+        run: npx playwright install chromium --with-deps
+
+      - name: config.json の生成（Secrets から）
+        working-directory: auto_carshop_searcher
+        run: |
+          cat > config.json << 'EOF'
+          {
+            "spreadsheet_id": "${{ secrets.SPREADSHEET_ID }}",
+            "sheet_name": "N-BOX在庫",
+            "line_token": "${{ secrets.LINE_NOTIFY_TOKEN }}",
+            "headless": true,
+            "delay_min_ms": 2000,
+            "delay_max_ms": 5000,
+            "enabled_scrapers": ["carsensor", "goonet", "nextage", "gulliver"]
+          }
+          EOF
+
+      - name: スクレイピング実行
+        working-directory: auto_carshop_searcher
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: npm start
