@@ -34,17 +34,8 @@ jobs:
 
       - name: config.json の生成（Secrets から）
         run: |
-          cat > config.json << 'EOF'
-          {
-            "spreadsheet_id": "${{ secrets.SPREADSHEET_ID }}",
-            "sheet_name": "N-BOX在庫",
-            "line_token": "${{ secrets.LINE_NOTIFY_TOKEN }}",
-            "headless": true,
-            "delay_min_ms": 2000,
-            "delay_max_ms": 5000,
-            "enabled_scrapers": ["carsensor", "goonet"]
-          }
-          EOF
+          echo '${{ secrets.GCP_CREDENTIALS }}' > credentials.json
+          echo '${{ secrets.CONFIG_JSON }}' > config.json
 
       - name: スクレイピング実行
         env:
