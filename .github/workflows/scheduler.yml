@@ -2,10 +2,12 @@ name: 中古車自動巡回 (N-BOX)
 
 on:
   schedule:
-    # 3時間おき（UTC 0:00, 3:00, 6:00, 9:00, 12:00, 15:00, 18:00, 21:00 = JST 9:00〜翌6:00）
     - cron: '0 */3 * * *'
-  # 手動実行も可能
   workflow_dispatch:
+
+# Node.js 24への強制移行警告に対応
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   scrape:
@@ -19,23 +21,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24' # 20から最新の24に変更
           cache: 'npm'
-          # プロジェクトルートのロックファイルを明示的に指定
           cache-dependency-path: ./package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      # 全ての working-directory 指定を削除しました
       - name: 依存パッケージのインストール
-        working-directory: auto_carshop_searcher
         run: npm ci
 
       - name: Playwright Chromium のインストール
-        working-directory: auto_carshop_searcher
         run: npx playwright install chromium --with-deps
 
       - name: config.json の生成（Secrets から）
-        working-directory: auto_carshop_searcher
         run: |
           cat > config.json << 'EOF'
           {
@@ -50,7 +47,6 @@ jobs:
           EOF
 
       - name: スクレイピング実行
-        working-directory: auto_carshop_searcher
         env:
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
         run: npm start
