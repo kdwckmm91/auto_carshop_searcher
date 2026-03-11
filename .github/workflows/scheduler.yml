@@ -38,6 +38,4 @@ jobs:
           echo '${{ secrets.CONFIG_JSON }}' > config.json
 
       - name: スクレイピング実行
-        env:
-          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
         run: npm start
