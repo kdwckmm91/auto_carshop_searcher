@@ -5,7 +5,7 @@ import { Config, ScraperConfig } from './types';
 const CONFIG_PATH = path.resolve(__dirname, '..', 'config.json');
 
 const DEFAULT_SCRAPER_CONFIG: ScraperConfig = {
-  yearMin: 2020,
+  yearMin: 2015,
   mileageMax: 50000,
   areaCodes: ['35', '34', '33', '36'],
   prefCodes: ['13', '11', '14', '12'],

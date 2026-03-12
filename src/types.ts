@@ -31,8 +31,6 @@ export interface CarListing {
   source: string;
   /** 詳細ページの URL */
   url: string;
-  /** 車台番号下3桁（重複排除精度向上用。取得不可の場合は null） */
-  vehicleIdSuffix: string | null;
   /** 取得日時（ISO 8601形式） */
   scrapedAt: string;
 }
@@ -51,8 +49,8 @@ export type SheetRow = [
   string,       // 在庫場所
   string,       // 取得元サイト
   string,       // URL
-  string,       // 車台番号(下3桁)
-  string        // 取得日時
+  string,       // 取得日時
+  string        // スコア
 ];
 
 export const SHEET_HEADERS: SheetRow = [
@@ -68,9 +66,32 @@ export const SHEET_HEADERS: SheetRow = [
   '在庫場所',
   '取得元サイト',
   'URL',
-  '車台番号(下3桁)',
   '取得日時',
+  'スコア',
 ];
+
+/**
+ * バリュー効率スコアを算出する。
+ *
+ * Score = (残走行距離[万km] + 残耐用年数[万km換算]) / 支払総額[万円]
+ *
+ * - 期待寿命: 15万km
+ * - 期待耐用年数: 15年（α=1万km/年）
+ * - 数値が高いほど「1万円あたりの残存価値」が大きい（割安）
+ */
+export function calcScore(
+  totalPrice: number | null,
+  mileage: number | null,
+  year: number | null
+): number | null {
+  if (totalPrice === null || totalPrice <= 0) return null;
+  if (mileage === null || year === null) return null;
+  const currentYear = new Date().getFullYear();
+  const remainingMileage = 15 - mileage;
+  const remainingYears = Math.max(0, 15 - (currentYear - year));
+  const raw = (remainingMileage + remainingYears) / totalPrice;
+  return Math.round(raw * 1000) / 1000;
+}
 
 /** スクレイパー共通の検索条件（config.json で設定） */
 export interface ScraperConfig {

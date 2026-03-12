@@ -71,15 +71,6 @@ function isSameVehicle(
 
   if (shopSimilar && priceSimilar) return true;
 
-  // 条件4b: 車台番号下3桁
-  if (
-    a.vehicleIdSuffix !== null &&
-    b.vehicleIdSuffix !== null &&
-    a.vehicleIdSuffix === b.vehicleIdSuffix
-  ) {
-    return true;
-  }
-
   return false;
 }
 

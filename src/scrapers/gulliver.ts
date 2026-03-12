@@ -141,7 +141,6 @@ export class GulliverScraper implements SiteScraper {
               shopAddress: null,
               source: siteName,
               url,
-              vehicleIdSuffix: null,
               scrapedAt: now,
             };
           })

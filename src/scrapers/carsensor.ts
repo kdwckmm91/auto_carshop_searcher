@@ -224,7 +224,6 @@ export class CarsensorScraper implements SiteScraper {
             shopName,
             source: siteName,
             url,
-            vehicleIdSuffix: null,
             scrapedAt: now,
           };
         });

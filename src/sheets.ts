@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { google, sheets_v4 } from 'googleapis';
 import { GoogleAuth } from 'google-auth-library';
-import { CarListing, SheetRow, SHEET_HEADERS, WriteStats } from './types';
+import { CarListing, SheetRow, SHEET_HEADERS, WriteStats, calcScore } from './types';
 
 // =========================================================
 // 認証
@@ -81,8 +81,8 @@ export async function writeListings(
 
   const stats: WriteStats = { added: 0, priceDown: 0, ended: 0, unchanged: 0 };
 
-  // --- ヘッダー確認・作成 ---
-  await ensureHeader(sheets, spreadsheetId, sheetName);
+  // --- ヘッダー確認・マイグレーション ---
+  await migrateHeader(sheets, spreadsheetId, sheetName);
 
   // --- 既存データ読み込み ---
   const { rows: existingRows, urlColIndex } = await getAllRows(spreadsheetId, sheetName);
@@ -166,7 +166,7 @@ export async function writeListings(
   if (appendRows.length > 0) {
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: `${sheetName}!A:O`,
+      range: `${sheetName}!A:${colLetter(SHEET_HEADERS.length)}`,
       valueInputOption: 'USER_ENTERED',
       insertDataOption: 'INSERT_ROWS',
       requestBody: { values: appendRows },
@@ -180,29 +180,79 @@ export async function writeListings(
 // ヘルパー
 // =========================================================
 
-/** ヘッダー行の確認・作成 */
-async function ensureHeader(
+/** シートのヘッダーを SHEET_HEADERS と照合し、差異がある場合に自動マイグレーションする。
+ *
+ * - 列の追加・削除・並び替えに対応。
+ * - 旧ヘッダーに存在しない新規列は空文字で埋める。
+ * - 旧ヘッダーにあるが新ヘッダーにない列は削除する。
+ */
+async function migrateHeader(
   sheets: sheets_v4.Sheets,
   spreadsheetId: string,
   sheetName: string
 ): Promise<void> {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${sheetName}!A1:O1`,
+    range: `${sheetName}!A:Z`,
   });
-  const firstRow = res.data.values?.[0] ?? [];
-  if (firstRow.length === 0 || firstRow[0] !== SHEET_HEADERS[0]) {
+  const values = (res.data.values as string[][] | undefined) ?? [];
+
+  // シートが空の場合はヘッダーだけ書き込む
+  if (values.length === 0) {
     await sheets.spreadsheets.values.update({
       spreadsheetId,
       range: `${sheetName}!A1`,
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [SHEET_HEADERS] },
     });
+    return;
   }
+
+  const currentHeader = values[0] as string[];
+
+  // ヘッダーが完全一致する場合はスキップ
+  if (
+    currentHeader.length === SHEET_HEADERS.length &&
+    currentHeader.every((h, i) => h === SHEET_HEADERS[i])
+  ) {
+    return;
+  }
+
+  console.log('[Sheets] ヘッダー変更を検出: マイグレーションを実行します...');
+
+  // 新列インデックス → 旧列インデックス（-1 = 新規列）のマッピング
+  const colMapping = SHEET_HEADERS.map((h) => currentHeader.indexOf(h));
+
+  // 既存データ行を新レイアウトに再マッピング
+  const dataRows = values.slice(1);
+  const remappedRows = dataRows.map((row) =>
+    SHEET_HEADERS.map((_, newIdx) => {
+      const oldIdx = colMapping[newIdx];
+      return oldIdx >= 0 ? (row[oldIdx] ?? '') : '';
+    })
+  );
+
+  // 旧列数と新列数の大きい方まで一括クリア
+  const maxCols = Math.max(currentHeader.length, SHEET_HEADERS.length);
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId,
+    range: `${sheetName}!A:${colLetter(maxCols)}`,
+  });
+
+  // 新ヘッダー + 再マッピング済みデータを書き戻す
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `${sheetName}!A1`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: [SHEET_HEADERS as string[], ...remappedRows] },
+  });
+
+  console.log(`[Sheets] マイグレーション完了 (${dataRows.length} 行)`);
 }
 
 /** CarListing → SheetRow 変換 */
 function toSheetRow(l: CarListing): SheetRow {
+  const score = calcScore(l.totalPrice, l.mileage, l.year);
   return [
     l.status,
     l.totalPrice !== null ? String(l.totalPrice) : '',
@@ -216,8 +266,8 @@ function toSheetRow(l: CarListing): SheetRow {
     l.location ?? '',
     l.source,
     l.url,
-    l.vehicleIdSuffix ?? '',
     l.scrapedAt,
+    score !== null ? String(score) : '',
   ];
 }
 

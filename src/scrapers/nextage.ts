@@ -138,7 +138,6 @@ export class NextageScraper implements SiteScraper {
               shopAddress: null,
               source: siteName,
               url,
-              vehicleIdSuffix: null,
               scrapedAt: now,
             };
           })

@@ -67,19 +67,15 @@ export function toAbsoluteUrl(href: string | null, baseUrl: string): string {
 
 /**
  * 現在時刻を日本時間 (JST, UTC+9) で ISO 8601 形式の文字列として返す。
- * 例: "2026-03-11T14:30:00+09:00"
+ * 例: "2026-03-11 23:06:28"
  */
 export function nowJst(): string {
-  const d = new Date();
-  // UTC+9 に補正したオフセット付き文字列を生成
-  const jstOffset = 9 * 60; // 分
-  const localOffset = d.getTimezoneOffset(); // 分（UTC-local、UTCより西が正）
-  const diff = (jstOffset + localOffset) * 60 * 1000;
-  const jst = new Date(d.getTime() + diff);
+  // UTC に常に +9h を加算することでタイムゾーン設定に依存しない
+  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
   const pad = (n: number) => String(n).padStart(2, '0');
   return (
-    `${jst.getUTCFullYear()}-${pad(jst.getUTCMonth() + 1)}-${pad(jst.getUTCDate())}` +
-    `T${pad(jst.getUTCHours())}:${pad(jst.getUTCMinutes())}:${pad(jst.getUTCSeconds())}+09:00`
+    `${jst.getUTCFullYear()}-${pad(jst.getUTCMonth() + 1)}-${pad(jst.getUTCDate())} ` +
+    `${pad(jst.getUTCHours())}:${pad(jst.getUTCMinutes())}:${pad(jst.getUTCSeconds())}`
   );
 }
 
