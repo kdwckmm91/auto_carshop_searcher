@@ -79,8 +79,17 @@ async function main(): Promise<void> {
 
   console.log(`\n[合計] スクレイピング結果: ${allRaw.length} 件（重複排除前）`);
 
-  // 5. 重複排除
-  const deduplicated = deduplicateListings(allRaw);
+  // 5. フィルタリング: 支払総額未取得・年式範囲外を除外
+  const yearMin = config.scraper_config.yearMin;
+  const filtered = allRaw.filter((l) => {
+    if (l.totalPrice === null) return false;
+    if (l.year === null || l.year < yearMin) return false;
+    return true;
+  });
+  console.log(`[合計] フィルタリング後: ${filtered.length} 件（除外: ${allRaw.length - filtered.length} 件）`);
+
+  // 6. 重複排除
+  const deduplicated = deduplicateListings(filtered);
   console.log(`[合計] 重複排除後: ${deduplicated.length} 件\n`);
 
   if (deduplicated.length === 0) {
@@ -91,7 +100,7 @@ async function main(): Promise<void> {
   // status を仮設定（writeListings 内で確定させる）
   const listings: CarListing[] = deduplicated.map((l) => ({ ...l, status: '新着' as const }));
 
-  // 6. スプレッドシートへ書き込み
+  // 7. スプレッドシートへ書き込み
   let notifyListings: CarListing[] = [];
   let priceDownListings: CarListing[] = [];
 
@@ -114,7 +123,7 @@ async function main(): Promise<void> {
     notifyListings = listings;
   }
 
-  // 7. LINE 通知
+  // 8. LINE 通知
   if (hasLineToken && (notifyListings.length > 0 || priceDownListings.length > 0)) {
     console.log(`\n[LINE] 通知送信中... (新着: ${notifyListings.length}, 値下げ: ${priceDownListings.length})`);
     try {

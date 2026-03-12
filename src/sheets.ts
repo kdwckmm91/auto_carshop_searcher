@@ -261,7 +261,6 @@ function toSheetRow(l: CarListing): SheetRow {
     l.mileage !== null ? String(l.mileage) : '',
     l.inspectionExpiry ?? '',
     l.repairHistory ?? '',
-    l.color ?? '',
     l.shopName ?? '',
     l.location ?? '',
     l.source,

@@ -44,7 +44,6 @@ export type SheetRow = [
   string,       // 走行距離
   string,       // 車検期限
   string,       // 修復歴
-  string,       // 外装色
   string,       // 店舗名
   string,       // 在庫場所
   string,       // 取得元サイト
@@ -61,7 +60,6 @@ export const SHEET_HEADERS: SheetRow = [
   '走行距離(万km)',
   '車検期限',
   '修復歴',
-  '外装色',
   '店舗名',
   '在庫場所',
   '取得元サイト',
