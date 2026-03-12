@@ -38,34 +38,34 @@ export interface CarListing {
 /** スプレッドシートの1行分のデータ（ヘッダー順） */
 export type SheetRow = [
   string,       // ステータス
+  string,       // 取得日時
+  string,       // URL
   string,       // 支払総額
   string,       // 本体価格
+  string,       // スコア
   string,       // 年式
   string,       // 走行距離
   string,       // 車検期限
   string,       // 修復歴
   string,       // 店舗名
   string,       // 在庫場所
-  string,       // 取得元サイト
-  string,       // URL
-  string,       // 取得日時
-  string        // スコア
+  string        // 取得元サイト
 ];
 
 export const SHEET_HEADERS: SheetRow = [
   'ステータス',
+  '取得日時',
+  'URL',
   '支払総額(万円)',
   '本体価格(万円)',
+  'スコア',
   '年式',
   '走行距離(万km)',
   '車検期限',
   '修復歴',
   '店舗名',
   '在庫場所',
-  '取得元サイト',
-  'URL',
-  '取得日時',
-  'スコア',
+  '取得元サイト'
 ];
 
 /**
