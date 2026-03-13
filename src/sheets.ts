@@ -255,8 +255,11 @@ function toSheetRow(l: CarListing): SheetRow {
   const score = calcScore(l.totalPrice, l.mileage, l.year);
   return [
     l.status,
+    l.scrapedAt,
+    l.url,
     l.totalPrice !== null ? String(l.totalPrice) : '',
     l.basePrice !== null ? String(l.basePrice) : '',
+    score !== null ? String(score) : '',
     l.year !== null ? String(l.year) : '',
     l.mileage !== null ? String(l.mileage) : '',
     l.inspectionExpiry ?? '',
@@ -264,9 +267,6 @@ function toSheetRow(l: CarListing): SheetRow {
     l.shopName ?? '',
     l.location ?? '',
     l.source,
-    l.url,
-    l.scrapedAt,
-    score !== null ? String(score) : '',
   ];
 }
 
